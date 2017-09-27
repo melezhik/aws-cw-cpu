@@ -102,7 +102,7 @@ for my $n (@stat) {
     
     my $d = Time::Piece->strptime($n->{Timestamp},"%Y-%m-%dT%TZ");
     my %datum = (
-        value => $n->{Maximum},
+        value => $n->{Maximum} + 0,
         label => ($range=~/hour/ ? $d->hour : $d->ymd)." ". ( 
           do {  my ($n,$a)  = split /\./ , $n->{Maximum}; sprintf "%02d.%02d%", $n, $a  }
         ),
