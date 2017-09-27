@@ -8,7 +8,7 @@ use Term::Chart;
 use strict;
 
 my $range = config()->{'range'};
-my $instance_id = config()->{instance_id};
+my $instance_id = config()->{instance_id} or die "instance id is required parameter!";
 
 print "CPU Load Stat\n";
 print "InstanceID: $instance_id\n";
