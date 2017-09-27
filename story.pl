@@ -1,3 +1,4 @@
+
 use Data::Dumper;
 use Time::Piece;
 use Time::Seconds;
@@ -7,17 +8,38 @@ use Term::Chart;
 use strict;
 
 my $range = config()->{'range'};
+my $instance_id = config()->{instance_id};
+
+print "CPU Load Stat\n";
+print "InstanceID: $instance_id\n";
+
 my $stop_time = localtime();
 my $start_time = localtime();
 my $period=0;
 
 if ($range=~/^\s*(\d+)\s+week/){
   $period = 60*60*24;
-  for my $w (1 .. $1){
+  for (1 .. $1){
     $start_time = $start_time - ONE_WEEK;
   }
   print "range: ", $range, " (", $start_time->ymd , " / ", $stop_time->ymd, ")\n";
+} elsif ( $range=~/^\s*(\d+)\s+days/ ) {
+  $period = 60*60*24;
+  for (1 .. $1){
+    $start_time = $start_time - ONE_DAY;
+  }
+  print "range: ", $range, " (", $start_time->ymd , " / ", $stop_time->ymd, ")\n";
+} elsif ( $range=~/^\s*(\d+)\s+hour/ ) {
+  $period = 60*60;
+  for (1 .. $1){
+    $start_time = $start_time - ONE_HOUR;
+  }
+  print "range: ", $range, " (", $start_time->datetime , " / ", $stop_time->datetime, ")\n";
+
+} else {
+  die "unknown range: $range; should be one of: \$N weeks|\$N days|\$N hours"
 }
+
 
 my $start_time_aws =  $start_time->datetime;
 my $stop_time_aws =   $stop_time->datetime;
@@ -27,7 +49,7 @@ my $cache_dir = cache_dir();
 my $cmd = "aws cloudwatch get-metric-statistics \\
 --metric-name CPUUtilization \\
 --namespace 'AWS/EC2'  \\
---dimensions Name=InstanceId,Value=i-09604b60068472008  \\
+--dimensions Name=InstanceId,Value=$instance_id  \\
 --start-time $start_time_aws  \\
 --end-time $stop_time_aws  \\
 --statistics Maximum  \\
@@ -81,7 +103,9 @@ for my $n (@stat) {
     my $d = Time::Piece->strptime($n->{Timestamp},"%Y-%m-%dT%TZ");
     my %datum = (
         value => $n->{Maximum},
-        label => ($d->ymd)." ".$n->{Maximum}."%",
+        label => ($range=~/hour/ ? $d->h : $d->ymd)." ". ( 
+          do {  my ($n,$a)  = split /\./ , $n->{Maximum}; sprintf "%02d.%02d%", $n, $a  }
+        ),
     );
     $tc->add_value( \%datum );
 }
