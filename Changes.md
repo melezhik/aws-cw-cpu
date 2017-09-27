@@ -1,3 +1,7 @@
+# 0.0.10
+
+* Update example
+
 # 0.0.9
 
 * fix formatting error
